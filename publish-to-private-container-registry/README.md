@@ -18,8 +18,10 @@ By default, OpenChoreo's workflow plane pushes built images to `ttl.sh` (an anon
 
 - k3d cluster with OpenChoreo installed (single-cluster setup)
 - `kubectl` configured to the cluster
+- `jq` installed (used in monitoring commands)
 - Docker Hub account with a repository (can be private)
-- Docker Hub access token (recommended over password): [create one here](https://hub.docker.com/settings/security)
+- Docker Hub Personal Access Token with **Read & Write** scope (required for pushing images): [create one here](https://hub.docker.com/settings/personal-access-tokens)
+  > **Note:** Read-only tokens will cause `access token has insufficient scopes` errors during the build's publish step.
 
 ## File Structure
 
@@ -230,7 +232,7 @@ Expected response:
 
 ## Cleanup
 
-Remove the component and workflow resources:
+Remove the WorkflowRun and Component. The WorkflowRun deletion automatically cleans up its scoped `registry-push-secret` ExternalSecret in `workflows-default`. The Component deletion cleans up the Workload, ReleaseBinding, and `registry-pull-secret` ExternalSecrets in the dataplane namespaces:
 
 ```bash
 kubectl delete -f 04-greeting-service-workflowrun.yaml
@@ -259,13 +261,21 @@ kubectl exec -n openbao openbao-0 -- sh -c '
 '
 ```
 
+Optionally, delete the image from Docker Hub if you no longer need it:
+
+```
+https://hub.docker.com/r/YOUR_DOCKERHUB_USERNAME/greeting-service/tags
+```
+
 ---
 
 ## Troubleshooting
 
-### Workflow push fails with "unauthorized"
+### Workflow push fails with "unauthorized" or "insufficient scopes"
 
-Verify the push secret is stored correctly:
+If the error is `access token has insufficient scopes`, your Docker Hub token was created with read-only access. Create a new token with **Read & Write** scope at [hub.docker.com/settings/personal-access-tokens](https://hub.docker.com/settings/personal-access-tokens) and re-run Steps 1–2 to update the secret.
+
+If the error is a general `unauthorized`, verify the push secret is stored correctly:
 ```bash
 kubectl exec -n openbao openbao-0 -- sh -c '
   export BAO_ADDR=http://127.0.0.1:8200 BAO_TOKEN=root
@@ -273,9 +283,9 @@ kubectl exec -n openbao openbao-0 -- sh -c '
 '
 ```
 
-Check that the `registry-push-secret` Kubernetes secret was synced to the `workflows-default` namespace:
+Check that the scoped push secret Kubernetes secret was synced to the `workflows-default` namespace:
 ```bash
-kubectl get secret registry-push-secret -n workflows-default
+kubectl get secret -n workflows-default | grep registry-push-secret
 ```
 
 ### Pods in ImagePullBackOff
