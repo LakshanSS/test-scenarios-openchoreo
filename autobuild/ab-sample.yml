@@ -1,0 +1,35 @@
+apiVersion: openchoreo.dev/v1alpha1
+kind: Component
+metadata:
+ name: auto-build-test
+spec:
+ owner:
+   projectName: default
+ componentType:
+    kind: ClusterComponentType
+    name: deployment/service
+ autoBuild: true  # Enable auto-build
+ autoDeploy: true
+ workflow:
+   kind: ClusterWorkflow
+   name: ballerina-buildpack-builder
+   parameters:
+     scope:
+        projectName: "default"
+        componentName: "auto-build-test"
+     repository:
+       url: "https://github.com/LakshanSS/sample-workloads"
+       revision:
+         branch: "main"
+       appPath: "/service-ballerina-patient-management"
+ parameters:
+   exposed: true
+   replicas: 1
+   port: 9090
+   resources:
+     requests:
+       cpu: "100m"
+       memory: "256Mi"
+     limits:
+       cpu: "500m"
+       memory: "512Mi"
