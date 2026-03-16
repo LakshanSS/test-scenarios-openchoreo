@@ -1,0 +1,30 @@
+apiVersion: openchoreo.dev/v1alpha1
+kind: Component
+metadata:
+  name: my-private-app
+  namespace: default
+spec:
+  autoDeploy: true
+  componentType:
+    kind: ClusterComponentType
+    name: deployment/service-private-registry
+  owner:
+    projectName: default
+  parameters: {}
+---
+apiVersion: openchoreo.dev/v1alpha1
+kind: Workload
+metadata:
+  name: my-private-app
+  namespace: default
+spec:
+  owner:
+    componentName: my-private-app
+    projectName: default
+  container:
+    image: "docker.io/YOUR_DOCKERHUB_USERNAME/YOUR_PRIVATE_IMAGE:v1"
+  endpoints:
+    http:
+      port: 80
+      type: HTTP
+      visibility: ["project", "external"]

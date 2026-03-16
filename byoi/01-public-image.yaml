@@ -1,0 +1,30 @@
+apiVersion: openchoreo.dev/v1alpha1
+kind: Component
+metadata:
+  name: my-app
+  namespace: default
+spec:
+  autoDeploy: true
+  componentType:
+    kind: ClusterComponentType
+    name: deployment/service
+  owner:
+    projectName: default
+  parameters: {}
+---
+apiVersion: openchoreo.dev/v1alpha1
+kind: Workload
+metadata:
+  name: my-app
+  namespace: default
+spec:
+  owner:
+    componentName: my-app
+    projectName: default
+  container:
+    image: "nginx:latest"
+  endpoints:
+    http:
+      port: 80
+      type: HTTP
+      visibility: ["project", "external"]
